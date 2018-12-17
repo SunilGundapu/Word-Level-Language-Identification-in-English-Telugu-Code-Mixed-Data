@@ -1,0 +1,47 @@
+from sklearn import model_selection, preprocessing, linear_model, naive_bayes, metrics, svm
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn import decomposition, ensemble
+
+import pandas, numpy, textblob, string
+from keras.preprocessing import text, sequence
+from keras import layers, models, optimizers
+
+data = open('data/cnn_features.txt','r')
+labels, texts = [], []
+f_data = data.readlines()
+for line in f_data:
+    content = line.strip().split("\t")
+    if(len(content)==2):
+        labels.append(content[1])
+        texts.append(content[0])
+
+trainDF = pandas.DataFrame()
+trainDF['text'] = texts
+trainDF['label'] = labels
+
+train_x, valid_x, train_y, valid_y = model_selection.train_test_split(trainDF['text'], trainDF['label'])
+encoder = preprocessing.LabelEncoder()
+train_y = encoder.fit_transform(train_y)
+valid_y = encoder.fit_transform(valid_y)
+
+
+embeddings_index = {}
+for i, line in enumerate(open('data/wiki-news-300d-1M.vec')):
+    values = line.split()
+    embeddings_index[values[0]] = numpy.asarray(values[1:], dtype='float32')
+    
+token = text.Tokenizer()
+token.fit_on_texts(trainDF['text'])
+word_index = token.word_index
+
+train_seq_x = sequence.pad_sequences(token.texts_to_sequences(train_x), maxlen=50)
+valid_seq_x = sequence.pad_sequences(token.texts_to_sequences(valid_x), maxlen=50)
+
+embedding_matrix = numpy.zeros((len(word_index) + 1, 300))
+
+print(embedding_matrix)
+for word, i in word_index.items():
+    embedding_vector = embeddings_index.get(word)
+    if embedding_vector is not None:
+        embedding_matrix[i] = embedding_vector
+

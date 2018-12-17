@@ -1,0 +1,3 @@
+def voc_size(file1):
+    voc = []
+    with open("cnn_features.txt","r")
